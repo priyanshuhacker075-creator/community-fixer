@@ -19,13 +19,38 @@ export const Route = createFileRoute("/contact")({
 function ContactPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    setError(null);
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_key: "26d70697-529d-4c6e-9167-d3f6ec2c84e3",
+          to: "priyanshuhacker075@gmail.com",
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSent(true);
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        setError(data.message || "Failed to send message");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    }
     setLoading(false);
-    setSent(true);
   }
 
   return (
@@ -61,29 +86,63 @@ function ContactPage() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8"
+              >
                 <label className="block">
                   <span className="text-sm font-semibold">Name</span>
-                  <input required className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40" />
+                  <input
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+                  />
                 </label>
                 <label className="block">
                   <span className="text-sm font-semibold">Email</span>
-                  <input required type="email" className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40" />
+                  <input
+                    required
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+                  />
                 </label>
                 <label className="block">
                   <span className="text-sm font-semibold">Subject</span>
-                  <input required className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40" />
+                  <input
+                    required
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+                  />
                 </label>
                 <label className="block">
                   <span className="text-sm font-semibold">Message</span>
-                  <textarea required rows={5} className="mt-2 w-full resize-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40" />
+                  <textarea
+                    required
+                    rows={5}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className="mt-2 w-full resize-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+                  />
                 </label>
+                {error && <p className="text-sm text-red-500">{error}</p>}
                 <button
                   type="submit"
                   disabled={loading}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-60"
                 >
-                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Send className="h-4 w-4" /> Send message</>}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" /> Send message
+                    </>
+                  )}
                 </button>
               </form>
             )}
@@ -91,12 +150,35 @@ function ContactPage() {
 
           <div className="space-y-4">
             {[
-              { icon: Mail, title: "Email", body: "hello@civicfix.org", desc: "We reply within 24 hours" },
-              { icon: MessageSquare, title: "GitHub", body: "github.com/civicfix", desc: "Open issues and PRs welcome" },
-              { icon: MapPin, title: "Location", body: "Brooklyn, NY", desc: "Remote-first team" },
-              { icon: Clock, title: "Response time", body: "< 24 hours", desc: "Usually much faster" },
+              {
+                icon: Mail,
+                title: "Email",
+                body: "priyanshuhacker075@gmail.com",
+                desc: "We reply within 24 hours",
+              },
+              {
+                icon: MessageSquare,
+                title: "GitHub",
+                body: "github.com/civicfix",
+                desc: "Open issues and PRs welcome",
+              },
+              {
+                icon: MapPin,
+                title: "Location",
+                body: "GBPIET Ghurdauri",
+                desc: "Uttrakhand, India",
+              },
+              {
+                icon: Clock,
+                title: "Response time",
+                body: "< 24 hours",
+                desc: "Usually much faster",
+              },
             ].map((c) => (
-              <div key={c.title} className="flex gap-4 rounded-2xl border border-border bg-card p-5">
+              <div
+                key={c.title}
+                className="flex gap-4 rounded-2xl border border-border bg-card p-5"
+              >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-hero text-primary-foreground">
                   <c.icon className="h-5 w-5" />
                 </span>

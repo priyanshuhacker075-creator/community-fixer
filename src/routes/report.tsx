@@ -1,7 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, LocateFixed, MapPin, Send, Sparkles, ShieldCheck, ShieldAlert, CheckCircle2, AlertTriangle } from "lucide-react";
+import {
+  Camera,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Send,
+  Sparkles,
+  ShieldCheck,
+  ShieldAlert,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  Plus,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
@@ -14,7 +27,10 @@ export const Route = createFileRoute("/report")({
       { title: "Report an issue — CivicFix" },
       { name: "description", content: "File a new neighborhood issue report in 30 seconds." },
       { property: "og:title", content: "Report an issue — CivicFix" },
-      { property: "og:description", content: "File a new neighborhood issue report in 30 seconds." },
+      {
+        property: "og:description",
+        content: "File a new neighborhood issue report in 30 seconds.",
+      },
     ],
   }),
   component: ReportPage,
@@ -27,7 +43,7 @@ function ReportPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [reporter, setReporter] = useState("");
-  const [photo, setPhoto] = useState<string | undefined>();
+  const [photos, setPhotos] = useState<string[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "locating" | "ok" | "error">("idle");
   const [geoError, setGeoError] = useState<string>("");
@@ -43,25 +59,41 @@ function ReportPage() {
       r.onerror = () => reject(r.error);
       r.readAsDataURL(file);
     });
-    setPhoto(dataUrl);
+    const newPhotos = [...photos, dataUrl];
+    setPhotos(newPhotos);
     setAiStatus("analyzing");
     setAiError("");
     setAnalysis(null);
     try {
-      const result = await runAnalyze({
-        data: { imageDataUrl: dataUrl, description },
-      });
-      setAnalysis(result);
-      if (CATEGORIES.includes(result.category as IssueCategory)) {
-        setCategory(result.category as IssueCategory);
+      const results: PhotoAnalysis[] = [];
+      for (const photoUrl of newPhotos) {
+        const result = await runAnalyze({
+          data: { imageDataUrl: photoUrl, description },
+        });
+        results.push(result);
       }
-      setTitle((t) => t || result.title);
-      setDescription((d) => d || result.description);
+      const worst = results.reduce((prev, curr) => {
+        const severityScore = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
+        return (severityScore[curr.severity] || 0) >= (severityScore[prev.severity] || 0)
+          ? curr
+          : prev;
+      });
+      setAnalysis(worst);
+      if (CATEGORIES.includes(worst.category as IssueCategory)) {
+        setCategory(worst.category as IssueCategory);
+      }
+      setTitle((t) => t || worst.title);
+      setDescription((d) => d || worst.description);
       setAiStatus("ok");
     } catch (e: any) {
       setAiStatus("error");
       setAiError(e?.message ?? "AI analysis failed");
     }
+  }
+
+  function removePhoto(index: number) {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    setPhotos(newPhotos);
   }
 
   async function detectLocation() {
@@ -121,7 +153,7 @@ function ReportPage() {
       createdAt: new Date().toISOString(),
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
-      image: photo,
+      image: photos[0],
       severity: analysis?.severity ?? "medium",
       aiReasoning: analysis?.reasoning,
       aiVerification: analysis
@@ -150,7 +182,10 @@ function ReportPage() {
         </h1>
         <p className="mt-2 text-muted-foreground">A short, specific report gets fixed faster.</p>
 
-        <form onSubmit={submit} className="mt-10 space-y-7 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8">
+        <form
+          onSubmit={submit}
+          className="mt-10 space-y-7 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8"
+        >
           <div>
             <Label>Category</Label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -172,12 +207,19 @@ function ReportPage() {
           </div>
 
           <Field label="Title" hint="Short and specific. ex: 'Crater pothole at Elm & 4th'">
-            <input required value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputCls}
+            />
           </Field>
 
           <Field label="What's going on?">
             <textarea
-              required rows={5} value={description}
+              required
+              rows={5}
+              value={description}
               onChange={(e) => setDescription(e.target.value)}
               className={`${inputCls} resize-none`}
               placeholder="Describe size, hazard, time of day, anything that helps a crew find and prioritize it."
@@ -187,7 +229,9 @@ function ReportPage() {
           <Field label="Location" icon={<MapPin className="h-4 w-4" />}>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
-                required value={address} onChange={(e) => setAddress(e.target.value)}
+                required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 className={inputCls}
                 placeholder="Detecting your location..."
               />
@@ -197,38 +241,71 @@ function ReportPage() {
                 disabled={geoStatus === "locating"}
                 className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-input bg-background px-4 py-2.5 text-sm font-semibold transition hover:border-foreground/40 disabled:opacity-60"
               >
-                {geoStatus === "locating"
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Locating</>
-                  : <><LocateFixed className="h-4 w-4" /> Use my location</>}
+                {geoStatus === "locating" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Locating
+                  </>
+                ) : (
+                  <>
+                    <LocateFixed className="h-4 w-4" /> Use my location
+                  </>
+                )}
               </button>
             </div>
             {geoStatus === "ok" && coords && (
               <p className="mt-2 text-xs text-success">
-                Pinned to {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} — adjust the address above if needed.
+                Pinned to {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} — adjust the address
+                above if needed.
               </p>
             )}
-            {geoStatus === "error" && (
-              <p className="mt-2 text-xs text-destructive">{geoError}</p>
-            )}
+            {geoStatus === "error" && <p className="mt-2 text-xs text-destructive">{geoError}</p>}
           </Field>
 
-          <Field label="Photo (optional)" hint="Our AI inspects it, verifies authenticity, and assesses severity.">
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface px-4 py-8 text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
-              <Camera className="h-5 w-5" />
-              {photo ? "Photo attached — replace?" : "Drop a photo or click to upload"}
-              <input type="file" accept="image/*" className="hidden"
-                onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
-            </label>
-            {photo && <img src={photo} alt="preview" className="mt-3 h-40 w-full rounded-xl object-cover" />}
+          <Field
+            label="Photos (optional)"
+            hint="Our AI inspects each photo, verifies authenticity, and assesses severity. You can add up to 5 photos."
+          >
+            <div className="flex flex-wrap gap-3">
+              {photos.map((photo, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={photo}
+                    alt={`preview ${index + 1}`}
+                    className="h-32 w-32 rounded-xl object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(index)}
+                    className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < 5 && (
+                <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-surface text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
+                  <Plus className="h-5 w-5" />
+                  Add photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      files.slice(0, 5 - photos.length).forEach((file) => onPhoto(file));
+                    }}
+                  />
+                </label>
+              )}
+            </div>
 
             {aiStatus === "analyzing" && (
               <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> AI is analyzing the photo…
               </div>
             )}
-            {aiStatus === "error" && (
-              <p className="mt-3 text-xs text-destructive">{aiError}</p>
-            )}
+            {aiStatus === "error" && <p className="mt-3 text-xs text-destructive">{aiError}</p>}
             {aiStatus === "ok" && analysis && (
               <div className="mt-3 space-y-3">
                 {/* Classification */}
@@ -254,38 +331,63 @@ function ReportPage() {
                 </div>
 
                 {/* Authenticity check */}
-                <div className={`rounded-xl border p-4 ${
-                  analysis.isGenuine
-                    ? "border-success/30 bg-success/5"
-                    : "border-destructive/30 bg-destructive/5"
-                }`}>
+                <div
+                  className={`rounded-xl border p-4 ${
+                    analysis.isGenuine
+                      ? "border-success/30 bg-success/5"
+                      : "border-destructive/30 bg-destructive/5"
+                  }`}
+                >
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                    {analysis.isGenuine
-                      ? <><ShieldCheck className="h-3.5 w-3.5 text-success" /> Photo verified</>
-                      : <><ShieldAlert className="h-3.5 w-3.5 text-destructive" /> Photo flagged</>}
+                    {analysis.isGenuine ? (
+                      <>
+                        <ShieldCheck className="h-3.5 w-3.5 text-success" /> Photo verified
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="h-3.5 w-3.5 text-destructive" /> Photo flagged
+                      </>
+                    )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{analysis.genuineReason}</p>
                 </div>
 
                 {/* Description match */}
-                <div className={`rounded-xl border p-4 ${
-                  analysis.descriptionMatch
-                    ? "border-success/30 bg-success/5"
-                    : "border-destructive/30 bg-destructive/5"
-                }`}>
+                <div
+                  className={`rounded-xl border p-4 ${
+                    analysis.descriptionMatch
+                      ? "border-success/30 bg-success/5"
+                      : "border-destructive/30 bg-destructive/5"
+                  }`}
+                >
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                    {analysis.descriptionMatch
-                      ? <><CheckCircle2 className="h-3.5 w-3.5 text-success" /> Description matches photo</>
-                      : <><AlertTriangle className="h-3.5 w-3.5 text-destructive" /> Description may not match photo</>}
+                    {analysis.descriptionMatch ? (
+                      <>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Description matches
+                        photo
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="h-3.5 w-3.5 text-destructive" /> Description may
+                        not match photo
+                      </>
+                    )}
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{analysis.descriptionMatchReason}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {analysis.descriptionMatchReason}
+                  </p>
                 </div>
               </div>
             )}
           </Field>
 
           <Field label="Your name (optional)">
-            <input value={reporter} onChange={(e) => setReporter(e.target.value)} className={inputCls} placeholder="Anonymous neighbor" />
+            <input
+              value={reporter}
+              onChange={(e) => setReporter(e.target.value)}
+              className={inputCls}
+              placeholder="Anonymous neighbor"
+            />
           </Field>
 
           <button
@@ -307,10 +409,23 @@ const inputCls =
 function Label({ children }: { children: React.ReactNode }) {
   return <span className="text-sm font-semibold">{children}</span>;
 }
-function Field({ label, hint, icon, children }: { label: string; hint?: string; icon?: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  icon,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="flex items-center gap-1.5 text-sm font-semibold">{icon}{label}</span>
+      <span className="flex items-center gap-1.5 text-sm font-semibold">
+        {icon}
+        {label}
+      </span>
       {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
       <div className="mt-2">{children}</div>
     </label>
