@@ -26,12 +26,58 @@ function ReportPage() {
   const [address, setAddress] = useState("");
   const [reporter, setReporter] = useState("");
   const [photo, setPhoto] = useState<string | undefined>();
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "locating" | "ok" | "error">("idle");
+  const [geoError, setGeoError] = useState<string>("");
 
   function onPhoto(file: File) {
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result as string);
     reader.readAsDataURL(file);
   }
+
+  async function detectLocation() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoStatus("error");
+      setGeoError("Your browser doesn't support location services.");
+      return;
+    }
+    setGeoStatus("locating");
+    setGeoError("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCoords({ lat: latitude, lng: longitude });
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            { headers: { Accept: "application/json" } },
+          );
+          const data = await res.json();
+          if (data?.display_name) setAddress(data.display_name);
+          else setAddress(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+        } catch {
+          setAddress(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+        }
+        setGeoStatus("ok");
+      },
+      (err) => {
+        setGeoStatus("error");
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission denied. You can type the address instead."
+            : "Couldn't get your location. You can type the address instead.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  // Auto-detect on first load
+  useEffect(() => {
+    detectLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
