@@ -5,6 +5,7 @@ import heroImg from "@/assets/hero-city.jpg";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { IssueCard } from "@/components/issue-card";
+import { WorldPollutionMap } from "@/components/world-pollution-map";
 import { useIssues } from "@/lib/issues-store";
 
 export const Route = createFileRoute("/")({
@@ -30,6 +31,10 @@ function Home() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+      {/* WORLD POLLUTION MAP */}
+      <section className="mx-auto max-w-7xl px-5 pt-8">
+        <WorldPollutionMap issues={issues} />
+      </section>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">

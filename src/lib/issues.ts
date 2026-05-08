@@ -7,7 +7,14 @@ export type IssueCategory =
   | "Sidewalk"
   | "Tree"
   | "Signage"
+  | "Fire"
+  | "Smoke"
+  | "Dumping"
+  | "Air Pollution"
+  | "Water Pollution"
   | "Other";
+
+export type PollutionSeverity = "none" | "low" | "medium" | "high" | "critical";
 
 export type Issue = {
   id: string;
@@ -22,7 +29,21 @@ export type Issue = {
   upvotes: number;
   reporter: string;
   image?: string;
+  severity?: PollutionSeverity;
+  aiReasoning?: string;
   updates: { at: string; note: string; by: string }[];
+};
+
+export const SEVERITY_LABEL: Record<PollutionSeverity, string> = {
+  none: "None", low: "Low", medium: "Medium", high: "High", critical: "Critical",
+};
+
+export const SEVERITY_COLOR: Record<PollutionSeverity, string> = {
+  none: "#94a3b8",
+  low: "#22c55e",
+  medium: "#eab308",
+  high: "#f97316",
+  critical: "#ef4444",
 };
 
 export const STATUS_LABEL: Record<IssueStatus, string> = {
@@ -40,7 +61,8 @@ export const STATUS_TONE: Record<IssueStatus, string> = {
 };
 
 export const CATEGORIES: IssueCategory[] = [
-  "Pothole", "Streetlight", "Graffiti", "Trash", "Sidewalk", "Tree", "Signage", "Other",
+  "Pothole", "Streetlight", "Graffiti", "Trash", "Sidewalk", "Tree", "Signage",
+  "Fire", "Smoke", "Dumping", "Air Pollution", "Water Pollution", "Other",
 ];
 
 export const SEED_ISSUES: Issue[] = [
@@ -124,5 +146,78 @@ export const SEED_ISSUES: Issue[] = [
     upvotes: 18,
     reporter: "Jordan L.",
     updates: [{ at: "2026-05-07T10:00:00Z", note: "Arborist en route.", by: "Parks Dept." }],
+  },
+  {
+    id: "FIX-2001",
+    title: "Wildfire smoke blanketing the valley",
+    description: "Heavy orange haze, ash falling, AQI through the roof.",
+    category: "Fire", status: "in_progress",
+    address: "Napa Valley, CA",
+    lat: 38.5025, lng: -122.2654,
+    createdAt: "2026-05-06T15:00:00Z",
+    upvotes: 184, reporter: "Camila V.",
+    severity: "critical",
+    aiReasoning: "Detected active flames + dense smoke plume, visibility < 200m.",
+    updates: [],
+  },
+  {
+    id: "FIX-2002",
+    title: "Industrial smoke stack venting black plume",
+    description: "Continuous black smoke from factory chimney for 6+ hours.",
+    category: "Smoke", status: "open",
+    address: "Jakarta industrial district",
+    lat: -6.2088, lng: 106.8456,
+    createdAt: "2026-05-07T03:00:00Z",
+    upvotes: 73, reporter: "Anonymous",
+    severity: "high",
+    updates: [],
+  },
+  {
+    id: "FIX-2003",
+    title: "Illegal dumping at riverbank",
+    description: "Construction waste and tires dumped along the bank.",
+    category: "Dumping", status: "open",
+    address: "Yamuna Riverbank, Delhi",
+    lat: 28.6139, lng: 77.2090,
+    createdAt: "2026-05-05T11:00:00Z",
+    upvotes: 41, reporter: "Rohit S.",
+    severity: "high",
+    updates: [],
+  },
+  {
+    id: "FIX-2004",
+    title: "Hazy skyline, persistent smog",
+    description: "Visibility down to 1km, eyes burning.",
+    category: "Air Pollution", status: "acknowledged",
+    address: "Beijing CBD",
+    lat: 39.9042, lng: 116.4074,
+    createdAt: "2026-05-04T08:00:00Z",
+    upvotes: 56, reporter: "Mei L.",
+    severity: "medium",
+    updates: [],
+  },
+  {
+    id: "FIX-2005",
+    title: "Foamy discharge into canal",
+    description: "White foam forming downstream of outlet pipe.",
+    category: "Water Pollution", status: "open",
+    address: "São Paulo canal",
+    lat: -23.5505, lng: -46.6333,
+    createdAt: "2026-05-07T09:00:00Z",
+    upvotes: 22, reporter: "Lucas P.",
+    severity: "medium",
+    updates: [],
+  },
+  {
+    id: "FIX-2006",
+    title: "Roadside trash pile, low",
+    description: "Small accumulated litter near bus stop.",
+    category: "Trash", status: "open",
+    address: "Lagos, Nigeria",
+    lat: 6.5244, lng: 3.3792,
+    createdAt: "2026-05-07T12:00:00Z",
+    upvotes: 8, reporter: "Anonymous",
+    severity: "low",
+    updates: [],
   },
 ];
