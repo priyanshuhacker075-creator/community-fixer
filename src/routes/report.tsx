@@ -148,11 +148,31 @@ function ReportPage() {
           </Field>
 
           <Field label="Location" icon={<MapPin className="h-4 w-4" />}>
-            <input
-              required value={address} onChange={(e) => setAddress(e.target.value)}
-              className={inputCls}
-              placeholder="Street, intersection, or landmark"
-            />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                required value={address} onChange={(e) => setAddress(e.target.value)}
+                className={inputCls}
+                placeholder="Detecting your location..."
+              />
+              <button
+                type="button"
+                onClick={detectLocation}
+                disabled={geoStatus === "locating"}
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-input bg-background px-4 py-2.5 text-sm font-semibold transition hover:border-foreground/40 disabled:opacity-60"
+              >
+                {geoStatus === "locating"
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Locating</>
+                  : <><LocateFixed className="h-4 w-4" /> Use my location</>}
+              </button>
+            </div>
+            {geoStatus === "ok" && coords && (
+              <p className="mt-2 text-xs text-success">
+                Pinned to {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} — adjust the address above if needed.
+              </p>
+            )}
+            {geoStatus === "error" && (
+              <p className="mt-2 text-xs text-destructive">{geoError}</p>
+            )}
           </Field>
 
           <Field label="Photo (optional)">
