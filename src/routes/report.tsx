@@ -1,0 +1,153 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Camera, MapPin, Send } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { CATEGORIES, IssueCategory } from "@/lib/issues";
+import { issuesStore } from "@/lib/issues-store";
+
+export const Route = createFileRoute("/report")({
+  head: () => ({
+    meta: [
+      { title: "Report an issue — CivicFix" },
+      { name: "description", content: "File a new neighborhood issue report in 30 seconds." },
+      { property: "og:title", content: "Report an issue — CivicFix" },
+      { property: "og:description", content: "File a new neighborhood issue report in 30 seconds." },
+    ],
+  }),
+  component: ReportPage,
+});
+
+function ReportPage() {
+  const navigate = useNavigate();
+  const [category, setCategory] = useState<IssueCategory>("Pothole");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [reporter, setReporter] = useState("");
+  const [photo, setPhoto] = useState<string | undefined>();
+
+  function onPhoto(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
+    issuesStore.add({
+      id,
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      status: "open",
+      address: address.trim() || "Unspecified location",
+      lat: 40.73 + Math.random() * 0.05,
+      lng: -74 + Math.random() * 0.05,
+      createdAt: new Date().toISOString(),
+      upvotes: 1,
+      reporter: reporter.trim() || "Anonymous neighbor",
+      image: photo,
+      updates: [],
+    });
+    navigate({ to: "/issues/$id", params: { id } });
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <section className="mx-auto max-w-3xl px-5 py-12">
+        <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent-foreground">
+          New report
+        </span>
+        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight md:text-5xl">
+          Tell us what you see
+        </h1>
+        <p className="mt-2 text-muted-foreground">A short, specific report gets fixed faster.</p>
+
+        <form onSubmit={submit} className="mt-10 space-y-7 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8">
+          {/* Category chips */}
+          <div>
+            <Label>Category</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  type="button"
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    category === c
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background hover:border-foreground/40"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Field label="Title" hint="Short and specific. ex: 'Crater pothole at Elm & 4th'">
+            <input required value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
+          </Field>
+
+          <Field label="What's going on?">
+            <textarea
+              required rows={5} value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${inputCls} resize-none`}
+              placeholder="Describe size, hazard, time of day, anything that helps a crew find and prioritize it."
+            />
+          </Field>
+
+          <Field label="Location" icon={<MapPin className="h-4 w-4" />}>
+            <input
+              required value={address} onChange={(e) => setAddress(e.target.value)}
+              className={inputCls}
+              placeholder="Street, intersection, or landmark"
+            />
+          </Field>
+
+          <Field label="Photo (optional)">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface px-4 py-8 text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
+              <Camera className="h-5 w-5" />
+              {photo ? "Photo attached — replace?" : "Drop a photo or click to upload"}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
+            </label>
+            {photo && <img src={photo} alt="preview" className="mt-3 h-40 w-full rounded-xl object-cover" />}
+          </Field>
+
+          <Field label="Your name (optional)">
+            <input value={reporter} onChange={(e) => setReporter(e.target.value)} className={inputCls} placeholder="Anonymous neighbor" />
+          </Field>
+
+          <button
+            type="submit"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3 text-sm font-semibold text-background transition hover:opacity-90 md:w-auto md:px-8"
+          >
+            <Send className="h-4 w-4" /> Submit report
+          </button>
+        </form>
+      </section>
+      <SiteFooter />
+    </div>
+  );
+}
+
+const inputCls =
+  "w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-ring/40";
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="text-sm font-semibold">{children}</span>;
+}
+function Field({ label, hint, icon, children }: { label: string; hint?: string; icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="flex items-center gap-1.5 text-sm font-semibold">{icon}{label}</span>
+      {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
+      <div className="mt-2">{children}</div>
+    </label>
+  );
+}
