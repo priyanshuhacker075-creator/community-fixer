@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUp, MapPin } from "lucide-react";
-import { Issue, STATUS_LABEL, STATUS_TONE } from "@/lib/issues";
+import { ArrowUp, MapPin, AlertTriangle } from "lucide-react";
+import { Issue, STATUS_LABEL, STATUS_TONE, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
 import { useIssues, issuesStore } from "@/lib/issues-store";
 
 function timeAgo(iso: string) {
@@ -29,9 +29,24 @@ export function IssueCard({ issue }: { issue: Issue }) {
           <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
             {issue.category}
           </span>
-          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_TONE[issue.status]}`}>
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_TONE[issue.status]}`}
+          >
             {STATUS_LABEL[issue.status]}
           </span>
+          {issue.severity && issue.severity !== "none" && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium"
+              style={{
+                borderColor: SEVERITY_COLOR[issue.severity],
+                color: SEVERITY_COLOR[issue.severity],
+                backgroundColor: `${SEVERITY_COLOR[issue.severity]}15`,
+              }}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              {SEVERITY_LABEL[issue.severity]}
+            </span>
+          )}
         </div>
         <button
           onClick={(e) => {
@@ -61,7 +76,9 @@ export function IssueCard({ issue }: { issue: Issue }) {
         <span className="inline-flex items-center gap-1">
           <MapPin className="h-3.5 w-3.5" /> {issue.address}
         </span>
-        <span>{timeAgo(issue.createdAt)} · {issue.id}</span>
+        <span>
+          {timeAgo(issue.createdAt)} · {issue.id}
+        </span>
       </div>
     </article>
   );
