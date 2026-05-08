@@ -71,6 +71,19 @@ export const issuesStore = {
     persist();
   },
   hasVoted: (id: string) => userVotes.has(id),
+  update: (id: string, updates: Partial<Issue>) => {
+    state = state.map((i) => (i.id === id ? { ...i, ...updates } : i));
+    persist();
+  },
+  addUpdate: (id: string, note: string, by: string) => {
+    state = state.map((i) => {
+      if (i.id === id) {
+        return { ...i, updates: [...i.updates, { at: new Date().toISOString(), note, by }] };
+      }
+      return i;
+    });
+    persist();
+  },
 };
 
 export function useIssues(): Issue[] {
