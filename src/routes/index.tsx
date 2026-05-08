@@ -5,6 +5,7 @@ import heroImg from "@/assets/hero-city.jpg";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { IssueCard } from "@/components/issue-card";
+import { WorldPollutionMap } from "@/components/world-pollution-map";
 import { useIssues } from "@/lib/issues-store";
 
 export const Route = createFileRoute("/")({
