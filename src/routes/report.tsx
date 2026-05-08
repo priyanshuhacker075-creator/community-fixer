@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Camera, MapPin, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Camera, Loader2, LocateFixed, MapPin, Send } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CATEGORIES, IssueCategory } from "@/lib/issues";
