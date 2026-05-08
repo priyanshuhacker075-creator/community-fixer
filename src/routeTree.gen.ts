@@ -9,20 +9,68 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OpensourceRouteImport } from './routes/opensource'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as IssuesRouteImport } from './routes/issues'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AlertsRouteImport } from './routes/alerts'
+import { Route as AiInsightsRouteImport } from './routes/ai-insights'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IssuesIdRouteImport } from './routes/issues.$id'
 
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpensourceRoute = OpensourceRouteImport.update({
+  id: '/opensource',
+  path: '/opensource',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IssuesRoute = IssuesRouteImport.update({
   id: '/issues',
   path: '/issues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsRoute = AlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiInsightsRoute = AiInsightsRouteImport.update({
+  id: '/ai-insights',
+  path: '/ai-insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -44,42 +92,121 @@ const IssuesIdRoute = IssuesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/ai-insights': typeof AiInsightsRoute
+  '/alerts': typeof AlertsRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/issues': typeof IssuesRouteWithChildren
+  '/map': typeof MapRoute
+  '/opensource': typeof OpensourceRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
+  '/trending': typeof TrendingRoute
   '/issues/$id': typeof IssuesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/ai-insights': typeof AiInsightsRoute
+  '/alerts': typeof AlertsRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/issues': typeof IssuesRouteWithChildren
+  '/map': typeof MapRoute
+  '/opensource': typeof OpensourceRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
+  '/trending': typeof TrendingRoute
   '/issues/$id': typeof IssuesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/ai-insights': typeof AiInsightsRoute
+  '/alerts': typeof AlertsRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/issues': typeof IssuesRouteWithChildren
+  '/map': typeof MapRoute
+  '/opensource': typeof OpensourceRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
+  '/trending': typeof TrendingRoute
   '/issues/$id': typeof IssuesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/issues' | '/report' | '/issues/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/ai-insights'
+    | '/alerts'
+    | '/contact'
+    | '/faq'
+    | '/issues'
+    | '/map'
+    | '/opensource'
+    | '/privacy'
+    | '/report'
+    | '/trending'
+    | '/issues/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/issues' | '/report' | '/issues/$id'
-  id: '__root__' | '/' | '/about' | '/issues' | '/report' | '/issues/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/ai-insights'
+    | '/alerts'
+    | '/contact'
+    | '/faq'
+    | '/issues'
+    | '/map'
+    | '/opensource'
+    | '/privacy'
+    | '/report'
+    | '/trending'
+    | '/issues/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/ai-insights'
+    | '/alerts'
+    | '/contact'
+    | '/faq'
+    | '/issues'
+    | '/map'
+    | '/opensource'
+    | '/privacy'
+    | '/report'
+    | '/trending'
+    | '/issues/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AiInsightsRoute: typeof AiInsightsRoute
+  AlertsRoute: typeof AlertsRoute
+  ContactRoute: typeof ContactRoute
+  FaqRoute: typeof FaqRoute
   IssuesRoute: typeof IssuesRouteWithChildren
+  MapRoute: typeof MapRoute
+  OpensourceRoute: typeof OpensourceRoute
+  PrivacyRoute: typeof PrivacyRoute
   ReportRoute: typeof ReportRoute
+  TrendingRoute: typeof TrendingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/report': {
       id: '/report'
       path: '/report'
@@ -87,11 +214,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/opensource': {
+      id: '/opensource'
+      path: '/opensource'
+      fullPath: '/opensource'
+      preLoaderRoute: typeof OpensourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/issues': {
       id: '/issues'
       path: '/issues'
       fullPath: '/issues'
       preLoaderRoute: typeof IssuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-insights': {
+      id: '/ai-insights'
+      path: '/ai-insights'
+      fullPath: '/ai-insights'
+      preLoaderRoute: typeof AiInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -132,9 +308,27 @@ const IssuesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AiInsightsRoute: AiInsightsRoute,
+  AlertsRoute: AlertsRoute,
+  ContactRoute: ContactRoute,
+  FaqRoute: FaqRoute,
   IssuesRoute: IssuesRouteWithChildren,
+  MapRoute: MapRoute,
+  OpensourceRoute: OpensourceRoute,
+  PrivacyRoute: PrivacyRoute,
   ReportRoute: ReportRoute,
+  TrendingRoute: TrendingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

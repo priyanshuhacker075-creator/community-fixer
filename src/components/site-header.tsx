@@ -11,8 +11,8 @@ const NAV_GROUPS = [
     items: [
       { to: "/", label: "Home", icon: Home, desc: "Overview & live pollution map" },
       { to: "/issues", label: "Browse reports", icon: Compass, desc: "Filter the community feed" },
-      { to: "/issues", label: "Map view", icon: Map, desc: "See every pin worldwide" },
-      { to: "/issues", label: "Trending", icon: BarChart3, desc: "Most upvoted this week" },
+      { to: "/map", label: "Map view", icon: Map, desc: "See every pin worldwide" },
+      { to: "/trending", label: "Trending", icon: BarChart3, desc: "Most upvoted this week" },
     ],
   },
   {
@@ -20,17 +20,17 @@ const NAV_GROUPS = [
     items: [
       { to: "/report", label: "Report an issue", icon: Plus, desc: "AI-assisted in 30 seconds" },
       { to: "/about", label: "How it works", icon: BookOpen, desc: "Our process, end-to-end" },
-      { to: "/about", label: "AI insights", icon: Sparkles, desc: "How we classify pollution" },
-      { to: "/about", label: "Subscribe to alerts", icon: Bell, desc: "Updates for your block" },
+      { to: "/ai-insights", label: "AI insights", icon: Sparkles, desc: "How we classify pollution" },
+      { to: "/alerts", label: "Subscribe to alerts", icon: Bell, desc: "Updates for your block" },
     ],
   },
   {
     label: "Support",
     items: [
-      { to: "/about", label: "Help & FAQ", icon: HelpCircle, desc: "Common questions" },
-      { to: "/about", label: "Privacy", icon: Shield, desc: "How we handle your data" },
-      { to: "/about", label: "Contact", icon: Mail, desc: "Reach the team" },
-      { to: "/about", label: "Open source", icon: Code2, desc: "Star us on GitHub" },
+      { to: "/faq", label: "Help & FAQ", icon: HelpCircle, desc: "Common questions" },
+      { to: "/privacy", label: "Privacy", icon: Shield, desc: "How we handle your data" },
+      { to: "/contact", label: "Contact", icon: Mail, desc: "Reach the team" },
+      { to: "/opensource", label: "Open source", icon: Code2, desc: "Star us on GitHub" },
     ],
   },
 ] as const;
@@ -56,7 +56,7 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-[1000] border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5">
         <Link to="/" className="group flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-hero text-primary-foreground shadow-elegant">
@@ -85,8 +85,8 @@ export function SiteHeader() {
           </button>
 
           {open && (
-            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-[min(92vw,520px)] origin-top-right overflow-hidden rounded-2xl border border-border bg-card shadow-deep">
-              <div className="grid gap-0 p-2 sm:grid-cols-1">
+            <div className="flex flex-col absolute right-0 top-[calc(100%+0.5rem)] z-[9999] w-[min(92vw,520px)] origin-top-right max-h-[calc(100vh-5rem)] rounded-2xl border border-border bg-card shadow-deep">
+              <div className="overflow-y-auto overscroll-contain p-2">
                 {NAV_GROUPS.map((group) => (
                   <div key={group.label} className="p-2">
                     <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -113,7 +113,7 @@ export function SiteHeader() {
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between gap-2 border-t border-border bg-surface px-4 py-3 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between gap-2 border-t border-border bg-surface px-4 py-3 text-xs text-muted-foreground shrink-0">
                 <span>Built by neighbors, for neighbors.</span>
                 <Link
                   to="/report"

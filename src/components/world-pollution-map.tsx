@@ -60,14 +60,14 @@ export function WorldPollutionMap({ issues }: { issues: Issue[] }) {
         </div>
       </div>
 
-      <div className="h-[380px] w-full bg-muted relative">
+      <div className="h-[380px] w-full bg-muted relative [isolation:isolate]">
         {mounted && Comp ? (
           <Comp.MapContainer
             center={[20, 0] as [number, number]}
             zoom={2}
             minZoom={2}
             worldCopyJump
-            scrollWheelZoom={false}
+            scrollWheelZoom={true}
             style={{ height: "100%", width: "100%" }}
           >
             <Comp.TileLayer

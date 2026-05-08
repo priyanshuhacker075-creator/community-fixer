@@ -31,17 +31,13 @@ function Home() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      {/* WORLD POLLUTION MAP */}
-      <section className="mx-auto max-w-7xl px-5 pt-8">
-        <WorldPollutionMap issues={issues} />
-      </section>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <img src={heroImg} alt="" width={1920} height={1080} className="h-full w-full object-cover opacity-90" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
         </div>
-        <div className="mx-auto max-w-7xl px-5 pb-24 pt-20 md:pb-32 md:pt-28">
+        <div className="mx-auto max-w-7xl px-5 pb-16 pt-12 md:pb-20 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -69,7 +65,7 @@ function Home() {
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
-                to="/issues"
+                to="/map"
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-6 py-3 text-sm font-semibold backdrop-blur transition hover:bg-card"
               >
                 Browse the map
@@ -95,6 +91,10 @@ function Home() {
         </div>
       </section>
 
+      {/* WORLD POLLUTION MAP */}
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <WorldPollutionMap issues={issues} />
+      </section>
       {/* WHY DIFFERENT */}
       <section className="border-y border-border bg-surface">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 md:grid-cols-3">
