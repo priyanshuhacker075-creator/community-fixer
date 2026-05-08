@@ -123,7 +123,7 @@ function ReportPage() {
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
       image: photo,
-      severity: severity ?? analysis?.severity,
+      severity: severity ?? analysis?.severity ?? "medium",
       aiReasoning: analysis?.reasoning,
       updates: [],
     });
