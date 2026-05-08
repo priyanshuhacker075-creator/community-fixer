@@ -31,11 +31,37 @@ function ReportPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "locating" | "ok" | "error">("idle");
   const [geoError, setGeoError] = useState<string>("");
+  const [aiStatus, setAiStatus] = useState<"idle" | "analyzing" | "ok" | "error">("idle");
+  const [aiError, setAiError] = useState<string>("");
+  const [analysis, setAnalysis] = useState<PhotoAnalysis | null>(null);
+  const [severity, setSeverity] = useState<PollutionSeverity | undefined>();
+  const runAnalyze = useServerFn(analyzePhoto);
 
-  function onPhoto(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => setPhoto(reader.result as string);
-    reader.readAsDataURL(file);
+  async function onPhoto(file: File) {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    setPhoto(dataUrl);
+    setAiStatus("analyzing");
+    setAiError("");
+    setAnalysis(null);
+    try {
+      const result = await runAnalyze({ data: { imageDataUrl: dataUrl } });
+      setAnalysis(result);
+      setSeverity(result.severity);
+      if (CATEGORIES.includes(result.category as IssueCategory)) {
+        setCategory(result.category as IssueCategory);
+      }
+      setTitle((t) => t || result.title);
+      setDescription((d) => d || result.description);
+      setAiStatus("ok");
+    } catch (e: any) {
+      setAiStatus("error");
+      setAiError(e?.message ?? "AI analysis failed");
+    }
   }
 
   async function detectLocation() {
