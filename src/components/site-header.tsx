@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Home, Compass, BookOpen, Plus, Menu, X, Map, BarChart3,
-  Bell, HelpCircle, Shield, Mail, Github, Sparkles,
+  Bell, HelpCircle, Shield, Mail, Code2, Sparkles,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -30,7 +30,7 @@ const NAV_GROUPS = [
       { to: "/about", label: "Help & FAQ", icon: HelpCircle, desc: "Common questions" },
       { to: "/about", label: "Privacy", icon: Shield, desc: "How we handle your data" },
       { to: "/about", label: "Contact", icon: Mail, desc: "Reach the team" },
-      { to: "/about", label: "Open source", icon: Github, desc: "Star us on GitHub" },
+      { to: "/about", label: "Open source", icon: Code2, desc: "Star us on GitHub" },
     ],
   },
 ] as const;
