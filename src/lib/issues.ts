@@ -61,7 +61,8 @@ export const STATUS_TONE: Record<IssueStatus, string> = {
 };
 
 export const CATEGORIES: IssueCategory[] = [
-  "Pothole", "Streetlight", "Graffiti", "Trash", "Sidewalk", "Tree", "Signage", "Other",
+  "Pothole", "Streetlight", "Graffiti", "Trash", "Sidewalk", "Tree", "Signage",
+  "Fire", "Smoke", "Dumping", "Air Pollution", "Water Pollution", "Other",
 ];
 
 export const SEED_ISSUES: Issue[] = [
