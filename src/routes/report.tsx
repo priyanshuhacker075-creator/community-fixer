@@ -123,6 +123,8 @@ function ReportPage() {
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
       image: photo,
+      severity: severity ?? analysis?.severity,
+      aiReasoning: analysis?.reasoning,
       updates: [],
     });
     navigate({ to: "/issues/$id", params: { id } });
