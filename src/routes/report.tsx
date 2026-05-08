@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, Loader2, LocateFixed, MapPin, Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Camera, Loader2, LocateFixed, MapPin, Send, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIES, IssueCategory } from "@/lib/issues";
+import { CATEGORIES, IssueCategory, PollutionSeverity, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
 import { issuesStore } from "@/lib/issues-store";
+import { analyzePhoto, type PhotoAnalysis } from "@/lib/analyze-photo.functions";
 
 export const Route = createFileRoute("/report")({
   head: () => ({
