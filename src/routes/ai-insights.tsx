@@ -9,7 +9,7 @@ export const Route = createFileRoute("/ai-insights")({
       { title: "AI-powered classification — CivicFix" },
       { name: "description", content: "How CivicFix uses AI to classify issue types and pollution severity from photos." },
       { property: "og:title", content: "AI-powered classification — CivicFix" },
-      { property: "og:description", content: "See how Google Gemini classifies your reports in real time." },
+      { property: "og:description", content: "See how Groq AI classifies your reports in real time." },
     ],
   }),
   component: AiInsightsPage,
@@ -31,7 +31,7 @@ function AiInsightsPage() {
         </div>
 
         <p className="mt-8 text-lg text-muted-foreground">
-          Every photo you upload runs through <strong className="text-foreground">Google Gemini 2.5 Flash</strong> —
+          Every photo you upload runs through <strong className="text-foreground">Groq Llama 3.2 Vision</strong> —
           our AI inspects the image and suggests a category, severity level, and a short description. No data is stored
           longer than necessary.
         </p>
@@ -55,9 +55,9 @@ function AiInsightsPage() {
 
         <div className="mt-12 rounded-3xl bg-gradient-hero p-8 text-primary-foreground">
           <Cpu className="h-8 w-8 text-accent" />
-          <h2 className="mt-4 font-display text-2xl font-bold">Powered by Gemini 2.5 Flash</h2>
+          <h2 className="mt-4 font-display text-2xl font-bold">Powered by Groq Llama 3.2 Vision</h2>
           <p className="mt-2 text-sm opacity-90">
-            We use Google's latest multimodal model to analyze images on-device in our secure Cloudflare Workers
+            We use Groq's fast inference API with Llama 3.2 Vision model to analyze images in our secure Cloudflare Workers
             environment. Typical analysis takes under 2 seconds.
           </p>
         </div>

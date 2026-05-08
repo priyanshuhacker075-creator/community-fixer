@@ -16,6 +16,14 @@ export type IssueCategory =
 
 export type PollutionSeverity = "none" | "low" | "medium" | "high" | "critical";
 
+export type AiVerification = {
+  isGenuine: boolean;
+  genuineReason: string;
+  descriptionMatch: boolean;
+  descriptionMatchReason: string;
+  confidence: number;
+};
+
 export type Issue = {
   id: string;
   title: string;
@@ -31,6 +39,7 @@ export type Issue = {
   image?: string;
   severity?: PollutionSeverity;
   aiReasoning?: string;
+  aiVerification?: AiVerification;
   updates: { at: string; note: string; by: string }[];
 };
 

@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, LocateFixed, MapPin, Send, Sparkles } from "lucide-react";
+import { Camera, Loader2, LocateFixed, MapPin, Send, Sparkles, ShieldCheck, ShieldAlert, CheckCircle2, AlertTriangle } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIES, IssueCategory, PollutionSeverity, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
+import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
 import { issuesStore } from "@/lib/issues-store";
 import { analyzePhoto, type PhotoAnalysis } from "@/lib/analyze-photo.functions";
 
@@ -34,7 +34,6 @@ function ReportPage() {
   const [aiStatus, setAiStatus] = useState<"idle" | "analyzing" | "ok" | "error">("idle");
   const [aiError, setAiError] = useState<string>("");
   const [analysis, setAnalysis] = useState<PhotoAnalysis | null>(null);
-  const [severity, setSeverity] = useState<PollutionSeverity | undefined>();
   const runAnalyze = useServerFn(analyzePhoto);
 
   async function onPhoto(file: File) {
@@ -49,9 +48,10 @@ function ReportPage() {
     setAiError("");
     setAnalysis(null);
     try {
-      const result = await runAnalyze({ data: { imageDataUrl: dataUrl } });
+      const result = await runAnalyze({
+        data: { imageDataUrl: dataUrl, description },
+      });
       setAnalysis(result);
-      setSeverity(result.severity);
       if (CATEGORIES.includes(result.category as IssueCategory)) {
         setCategory(result.category as IssueCategory);
       }
@@ -101,7 +101,6 @@ function ReportPage() {
     );
   }
 
-  // Auto-detect on first load
   useEffect(() => {
     detectLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,8 +122,17 @@ function ReportPage() {
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
       image: photo,
-      severity: severity ?? analysis?.severity ?? "medium",
+      severity: analysis?.severity ?? "medium",
       aiReasoning: analysis?.reasoning,
+      aiVerification: analysis
+        ? {
+            isGenuine: analysis.isGenuine,
+            genuineReason: analysis.genuineReason,
+            descriptionMatch: analysis.descriptionMatch,
+            descriptionMatchReason: analysis.descriptionMatchReason,
+            confidence: analysis.confidence,
+          }
+        : undefined,
       updates: [],
     });
     navigate({ to: "/issues/$id", params: { id } });
@@ -143,7 +151,6 @@ function ReportPage() {
         <p className="mt-2 text-muted-foreground">A short, specific report gets fixed faster.</p>
 
         <form onSubmit={submit} className="mt-10 space-y-7 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8">
-          {/* Category chips */}
           <div>
             <Label>Category</Label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -205,7 +212,7 @@ function ReportPage() {
             )}
           </Field>
 
-          <Field label="Photo (optional)" hint="Our AI inspects it and suggests a category + pollution severity.">
+          <Field label="Photo (optional)" hint="Our AI inspects it, verifies authenticity, and assesses severity.">
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface px-4 py-8 text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
               <Camera className="h-5 w-5" />
               {photo ? "Photo attached — replace?" : "Drop a photo or click to upload"}
@@ -223,44 +230,55 @@ function ReportPage() {
               <p className="mt-3 text-xs text-destructive">{aiError}</p>
             )}
             {aiStatus === "ok" && analysis && (
-              <div className="mt-3 rounded-xl border border-border bg-surface p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5 text-accent" /> AI assessment
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background">
-                    {analysis.category}
-                  </span>
-                  <span
-                    className="rounded-full px-2.5 py-1 text-xs font-bold text-white"
-                    style={{ background: SEVERITY_COLOR[severity ?? analysis.severity] }}
-                  >
-                    {SEVERITY_LABEL[severity ?? analysis.severity]} severity
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {(analysis.confidence * 100).toFixed(0)}% confidence
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">{analysis.reasoning}</p>
-                <div className="mt-3">
-                  <span className="text-xs font-semibold">Override severity:</span>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {(["low","medium","high","critical"] as PollutionSeverity[]).map((s) => (
-                      <button
-                        type="button"
-                        key={s}
-                        onClick={() => setSeverity(s)}
-                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
-                          (severity ?? analysis.severity) === s
-                            ? "border-transparent text-white"
-                            : "border-border bg-background hover:border-foreground/40"
-                        }`}
-                        style={(severity ?? analysis.severity) === s ? { background: SEVERITY_COLOR[s] } : undefined}
-                      >
-                        {SEVERITY_LABEL[s]}
-                      </button>
-                    ))}
+              <div className="mt-3 space-y-3">
+                {/* Classification */}
+                <div className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5 text-accent" /> AI assessment
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background">
+                      {analysis.category}
+                    </span>
+                    <span
+                      className="rounded-full px-2.5 py-1 text-xs font-bold text-white"
+                      style={{ background: SEVERITY_COLOR[analysis.severity] }}
+                    >
+                      {SEVERITY_LABEL[analysis.severity]} severity
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(analysis.confidence * 100).toFixed(0)}% confidence
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{analysis.reasoning}</p>
+                </div>
+
+                {/* Authenticity check */}
+                <div className={`rounded-xl border p-4 ${
+                  analysis.isGenuine
+                    ? "border-success/30 bg-success/5"
+                    : "border-destructive/30 bg-destructive/5"
+                }`}>
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                    {analysis.isGenuine
+                      ? <><ShieldCheck className="h-3.5 w-3.5 text-success" /> Photo verified</>
+                      : <><ShieldAlert className="h-3.5 w-3.5 text-destructive" /> Photo flagged</>}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{analysis.genuineReason}</p>
+                </div>
+
+                {/* Description match */}
+                <div className={`rounded-xl border p-4 ${
+                  analysis.descriptionMatch
+                    ? "border-success/30 bg-success/5"
+                    : "border-destructive/30 bg-destructive/5"
+                }`}>
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                    {analysis.descriptionMatch
+                      ? <><CheckCircle2 className="h-3.5 w-3.5 text-success" /> Description matches photo</>
+                      : <><AlertTriangle className="h-3.5 w-3.5 text-destructive" /> Description may not match photo</>}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{analysis.descriptionMatchReason}</p>
                 </div>
               </div>
             )}

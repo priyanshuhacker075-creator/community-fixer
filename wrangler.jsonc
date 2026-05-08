@@ -4,4 +4,16 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "env": {
+    "production": {
+      "vars": {
+        "GROQ_API_KEY": "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"
+      }
+    },
+    "development": {
+      "vars": {
+        "GROQ_API_KEY": "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"
+      }
+    }
+  }
 }

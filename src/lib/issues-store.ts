@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { Issue, SEED_ISSUES } from "./issues";
 
 const KEY = "civicfix:issues:v1";
+const VOTES_KEY = "civicfix:votes:v1";
 
 function load(): Issue[] {
   if (typeof window === "undefined") return SEED_ISSUES;
@@ -14,7 +15,25 @@ function load(): Issue[] {
   }
 }
 
+function loadVotes(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(VOTES_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveVotes(votes: Set<string>) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(VOTES_KEY, JSON.stringify([...votes]));
+  }
+}
+
 let state: Issue[] = SEED_ISSUES;
+let userVotes = new Set<string>();
 const listeners = new Set<() => void>();
 
 function persist() {
@@ -28,6 +47,7 @@ export const issuesStore = {
   get: () => state,
   hydrate: () => {
     state = load();
+    userVotes = loadVotes();
     listeners.forEach((l) => l());
   },
   subscribe: (l: () => void) => {
@@ -38,10 +58,19 @@ export const issuesStore = {
     state = [issue, ...state];
     persist();
   },
-  upvote: (id: string) => {
-    state = state.map((i) => (i.id === id ? { ...i, upvotes: i.upvotes + 1 } : i));
+  toggleUpvote: (id: string) => {
+    const hasVoted = userVotes.has(id);
+    if (hasVoted) {
+      userVotes.delete(id);
+      state = state.map((i) => (i.id === id ? { ...i, upvotes: i.upvotes - 1 } : i));
+    } else {
+      userVotes.add(id);
+      state = state.map((i) => (i.id === id ? { ...i, upvotes: i.upvotes + 1 } : i));
+    }
+    saveVotes(userVotes);
     persist();
   },
+  hasVoted: (id: string) => userVotes.has(id),
 };
 
 export function useIssues(): Issue[] {
