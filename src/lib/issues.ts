@@ -7,7 +7,14 @@ export type IssueCategory =
   | "Sidewalk"
   | "Tree"
   | "Signage"
+  | "Fire"
+  | "Smoke"
+  | "Dumping"
+  | "Air Pollution"
+  | "Water Pollution"
   | "Other";
+
+export type PollutionSeverity = "none" | "low" | "medium" | "high" | "critical";
 
 export type Issue = {
   id: string;
@@ -22,7 +29,21 @@ export type Issue = {
   upvotes: number;
   reporter: string;
   image?: string;
+  severity?: PollutionSeverity;
+  aiReasoning?: string;
   updates: { at: string; note: string; by: string }[];
+};
+
+export const SEVERITY_LABEL: Record<PollutionSeverity, string> = {
+  none: "None", low: "Low", medium: "Medium", high: "High", critical: "Critical",
+};
+
+export const SEVERITY_COLOR: Record<PollutionSeverity, string> = {
+  none: "#94a3b8",
+  low: "#22c55e",
+  medium: "#eab308",
+  high: "#f97316",
+  critical: "#ef4444",
 };
 
 export const STATUS_LABEL: Record<IssueStatus, string> = {
