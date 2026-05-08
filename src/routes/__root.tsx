@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "CivicFix — Report neighborhood issues, transparently" },
       { name: "description", content: "Modern civic reporting: potholes, lights, graffiti and more — tracked publicly until resolved." },
       { name: "author", content: "CivicFix" },
-      { property: "og:title", content: "CivicFix — See it. Click it. Fix it together." },
+      { property: "og:title", content: "CivicFix — Report neighborhood issues, transparently" },
       { property: "og:description", content: "Modern civic reporting: potholes, lights, graffiti and more — tracked publicly until resolved." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "CivicFix — Report neighborhood issues, transparently" },
+      { name: "twitter:description", content: "Modern civic reporting: potholes, lights, graffiti and more — tracked publicly until resolved." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e2854b8-2126-4e10-8ab7-f5811909f336/id-preview-60922377--45162499-d0d1-4568-b127-92ae23439f50.lovable.app-1778258394841.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e2854b8-2126-4e10-8ab7-f5811909f336/id-preview-60922377--45162499-d0d1-4568-b127-92ae23439f50.lovable.app-1778258394841.png" },
     ],
     links: [
       {
