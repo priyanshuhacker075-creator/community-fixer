@@ -205,7 +205,7 @@ function ReportPage() {
             )}
           </Field>
 
-          <Field label="Photo (optional)">
+          <Field label="Photo (optional)" hint="Our AI inspects it and suggests a category + pollution severity.">
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface px-4 py-8 text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
               <Camera className="h-5 w-5" />
               {photo ? "Photo attached — replace?" : "Drop a photo or click to upload"}
@@ -213,6 +213,57 @@ function ReportPage() {
                 onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             </label>
             {photo && <img src={photo} alt="preview" className="mt-3 h-40 w-full rounded-xl object-cover" />}
+
+            {aiStatus === "analyzing" && (
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> AI is analyzing the photo…
+              </div>
+            )}
+            {aiStatus === "error" && (
+              <p className="mt-3 text-xs text-destructive">{aiError}</p>
+            )}
+            {aiStatus === "ok" && analysis && (
+              <div className="mt-3 rounded-xl border border-border bg-surface p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-accent" /> AI assessment
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background">
+                    {analysis.category}
+                  </span>
+                  <span
+                    className="rounded-full px-2.5 py-1 text-xs font-bold text-white"
+                    style={{ background: SEVERITY_COLOR[severity ?? analysis.severity] }}
+                  >
+                    {SEVERITY_LABEL[severity ?? analysis.severity]} severity
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {(analysis.confidence * 100).toFixed(0)}% confidence
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{analysis.reasoning}</p>
+                <div className="mt-3">
+                  <span className="text-xs font-semibold">Override severity:</span>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {(["low","medium","high","critical"] as PollutionSeverity[]).map((s) => (
+                      <button
+                        type="button"
+                        key={s}
+                        onClick={() => setSeverity(s)}
+                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                          (severity ?? analysis.severity) === s
+                            ? "border-transparent text-white"
+                            : "border-border bg-background hover:border-foreground/40"
+                        }`}
+                        style={(severity ?? analysis.severity) === s ? { background: SEVERITY_COLOR[s] } : undefined}
+                      >
+                        {SEVERITY_LABEL[s]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </Field>
 
           <Field label="Your name (optional)">
