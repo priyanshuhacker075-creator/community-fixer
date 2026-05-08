@@ -28,7 +28,10 @@ export function WorldPollutionMap({ issues }: { issues: Issue[] }) {
     });
   }, []);
 
-  const points = issues.filter((i) => POLLUTION_CATEGORIES.has(i.category) && i.severity);
+  // Plot every report; default low severity when AI didn't classify it.
+  const points = issues
+    .filter((i) => typeof i.lat === "number" && typeof i.lng === "number")
+    .map((i) => ({ ...i, severity: (i.severity ?? (POLLUTION_CATEGORIES.has(i.category) ? "medium" : "low")) as PollutionSeverity }));
   const counts = points.reduce<Record<PollutionSeverity, number>>(
     (acc, i) => { const s = i.severity ?? "none"; acc[s] = (acc[s] ?? 0) + 1; return acc; },
     { none: 0, low: 0, medium: 0, high: 0, critical: 0 },
