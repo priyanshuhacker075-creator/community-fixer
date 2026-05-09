@@ -79,6 +79,18 @@ const AUTHORITY_MAP: Record<string, { email: string; name: string }> = {
   Other: { email: "admin@civicfix.org", name: "CivicFix Admin" },
 };
 
+const TEMPLATES = [
+  "Investigating",
+  "Crew dispatched",
+  "Scheduled for repair",
+  "Under review",
+  "Need more info",
+  "Duplicate report",
+  "Invalid report",
+  "Resolved - Fixed",
+  "Resolved - No action needed",
+];
+
 function AdminPage() {
   const { isAuthenticated, login, logout } = useAdminAuth();
   const [password, setPassword] = useState("");
@@ -431,6 +443,86 @@ Please take appropriate action on this issue.
                   </div>
                 </div>
               )}
+
+              {/* Admin Activity Update Section */}
+              <div className="mt-4 rounded-xl border border-border p-3">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
+                  Add Admin Update
+                </p>
+                <div className="mt-3 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {TEMPLATES.map((template) => (
+                      <button
+                        key={template}
+                        onClick={() => {
+                          issuesStore.addUpdate(selectedIssue.id, template, "Admin");
+                          setSelectedIssue({
+                            ...selectedIssue,
+                            updates: [
+                              ...selectedIssue.updates,
+                              { at: new Date().toISOString(), note: template, by: "Admin" },
+                            ],
+                          });
+                        }}
+                        className="rounded-full border border-input bg-background px-3 py-1 text-xs font-medium hover:border-foreground/40"
+                      >
+                        {template}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Or write custom note..."
+                      className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                          issuesStore.addUpdate(
+                            selectedIssue.id,
+                            e.currentTarget.value.trim(),
+                            "Admin",
+                          );
+                          setSelectedIssue({
+                            ...selectedIssue,
+                            updates: [
+                              ...selectedIssue.updates,
+                              {
+                                at: new Date().toISOString(),
+                                note: e.currentTarget.value.trim(),
+                                by: "Admin",
+                              },
+                            ],
+                          });
+                          e.currentTarget.value = "";
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                        if (input?.value.trim()) {
+                          issuesStore.addUpdate(selectedIssue.id, input.value.trim(), "Admin");
+                          setSelectedIssue({
+                            ...selectedIssue,
+                            updates: [
+                              ...selectedIssue.updates,
+                              {
+                                at: new Date().toISOString(),
+                                note: input.value.trim(),
+                                by: "Admin",
+                              },
+                            ],
+                          });
+                          input.value = "";
+                        }
+                      }}
+                      className="rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background hover:opacity-90"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
