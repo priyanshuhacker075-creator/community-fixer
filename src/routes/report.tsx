@@ -138,15 +138,17 @@ function ReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
-    issuesStore.add({
+    const currentSeverity = analysis?.severity ?? "medium";
+
+    const issue = {
       id,
       title: title.trim(),
       description: description.trim(),
       category,
-      status: "open",
+      status: "open" as const,
       address: address.trim() || "Unspecified location",
       lat: coords?.lat ?? 40.73 + Math.random() * 0.05,
       lng: coords?.lng ?? -74 + Math.random() * 0.05,
@@ -154,7 +156,7 @@ function ReportPage() {
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
       image: photos[0],
-      severity: analysis?.severity ?? "medium",
+      severity: currentSeverity,
       aiReasoning: analysis?.reasoning,
       aiVerification: analysis
         ? {
@@ -166,7 +168,65 @@ function ReportPage() {
           }
         : undefined,
       updates: [],
-    });
+    };
+
+    issuesStore.add(issue);
+
+    // Auto-notify for critical/high severity
+    if (currentSeverity === "critical" || currentSeverity === "high") {
+      console.log(`[Auto-notify] Sending ${currentSeverity} notification for ${id}...`);
+      try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            access_key: "26d70697-529d-4c6e-9167-d3f6ec2c84e3",
+            to: "priyanshuhacker075@gmail.com",
+            subject: `[CivicFix] URGENT: ${currentSeverity.toUpperCase()} Severity Report - ${id}`,
+            name: "CivicFix Auto-Notification",
+            message: `
+🚨 AUTOMATIC NOTIFICATION - ${currentSeverity.toUpperCase()} SEVERITY
+
+A new ${currentSeverity} severity issue has been reported and requires immediate attention.
+
+REPORT DETAILS:
+- ID: ${id}
+- Category: ${category}
+- Severity: ${currentSeverity.toUpperCase()}
+- Location: ${issue.address}
+- Reporter: ${issue.reporter}
+- Coordinates: ${issue.lat.toFixed(5)}, ${issue.lng.toFixed(5)}
+- Reported: ${new Date(issue.createdAt).toLocaleString()}
+
+TITLE: ${issue.title}
+DESCRIPTION: ${issue.description}
+
+${issue.aiReasoning ? `AI ANALYSIS: ${issue.aiReasoning}` : ""}
+
+Please take immediate action on this report.
+            `.trim(),
+          }),
+        });
+        const data = await response.json();
+        console.log("[Auto-notify] Response:", data);
+
+        if (data.success) {
+          issuesStore.addUpdate(
+            id,
+            `Auto-notification sent for ${currentSeverity} severity`,
+            "System",
+          );
+          console.log(`[Auto-notify] ✓ Notification sent successfully for ${id}`);
+        } else {
+          console.error("[Auto-notify] Failed:", data.message);
+        }
+      } catch (error) {
+        console.error("[Auto-notify] Error:", error);
+      }
+    } else {
+      console.log(`[Auto-notify] Skipped - severity is ${currentSeverity} (not critical/high)`);
+    }
+
     navigate({ to: "/issues/$id", params: { id } });
   }
 

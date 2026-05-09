@@ -84,6 +84,10 @@ export const issuesStore = {
     });
     persist();
   },
+  remove: (id: string) => {
+    state = state.filter((i) => i.id !== id);
+    persist();
+  },
 };
 
 export function useIssues(): Issue[] {

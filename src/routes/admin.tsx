@@ -22,6 +22,7 @@ import {
   Eye,
   EyeOff,
   LogOut,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -324,12 +325,24 @@ Please take appropriate action on this issue.
                       {issue.address}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => setSelectedIssue(issue)}
-                        className="rounded bg-foreground px-2 py-1 text-xs font-semibold text-background hover:opacity-90"
-                      >
-                        View
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedIssue(issue)}
+                          className="rounded bg-foreground px-2 py-1 text-xs font-semibold text-background hover:opacity-90"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete issue ${issue.id}? This cannot be undone.`)) {
+                              issuesStore.remove(issue.id);
+                            }
+                          }}
+                          className="rounded border border-destructive bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive hover:bg-destructive/20"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
