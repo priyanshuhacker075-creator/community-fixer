@@ -39,16 +39,14 @@ const ADMIN_PASSWORD = "admin123";
 const AUTH_KEY = "civicfix:admin:auth";
 
 function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(AUTH_KEY);
-    setIsAuthenticated(stored === "true");
-  }, []);
+  // Always start as not authenticated - require login every time
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [, setForceRefresh] = useState(0);
 
   const login = (password: string) => {
     if (password === ADMIN_PASSWORD) {
-      localStorage.setItem(AUTH_KEY, "true");
+      // Store session in sessionStorage (clears when browser closes)
+      sessionStorage.setItem(AUTH_KEY, "true");
       setIsAuthenticated(true);
       return true;
     }
@@ -56,8 +54,9 @@ function useAdminAuth() {
   };
 
   const logout = () => {
-    localStorage.removeItem(AUTH_KEY);
+    sessionStorage.removeItem(AUTH_KEY);
     setIsAuthenticated(false);
+    setForceRefresh((n) => n + 1);
   };
 
   return { isAuthenticated, login, logout };
@@ -101,14 +100,6 @@ function AdminPage() {
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
