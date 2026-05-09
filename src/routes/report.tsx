@@ -18,7 +18,7 @@ import {
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
-import { issuesStore } from "@/lib/issues-store";
+import { issuesStore, useIssues } from "@/lib/issues-store";
 import { analyzePhoto, type PhotoAnalysis } from "@/lib/analyze-photo.functions";
 
 export const Route = createFileRoute("/report")({
@@ -50,7 +50,9 @@ function ReportPage() {
   const [aiStatus, setAiStatus] = useState<"idle" | "analyzing" | "ok" | "error">("idle");
   const [aiError, setAiError] = useState<string>("");
   const [analysis, setAnalysis] = useState<PhotoAnalysis | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const runAnalyze = useServerFn(analyzePhoto);
+  const issues = useIssues();
 
   async function onPhoto(file: File) {
     const dataUrl: string = await new Promise((resolve, reject) => {
@@ -140,8 +142,80 @@ function ReportPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
+    setValidationError(null);
+
     const currentSeverity = analysis?.severity ?? "medium";
+
+    // Check for fake report (stock photo or AI-generated)
+    if (analysis && !analysis.isGenuine) {
+      setValidationError(
+        `Report rejected: ${analysis.genuineReason}. Please upload an original photo taken on-site.`,
+      );
+      return;
+    }
+
+    // Check for "none" severity - reject reports with no meaningful severity
+    if (analysis && analysis.severity === "none") {
+      setValidationError(
+        "Report rejected: The uploaded image does not appear to show a valid civic issue. Please upload a photo of an actual problem (pothole, trash, damage, etc.).",
+      );
+      return;
+    }
+
+    // Check for duplicates using AI category + location + time
+    const now = Date.now();
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const currentLat = coords?.lat ?? 40.73 + Math.random() * 0.05;
+    const currentLng = coords?.lng ?? -74 + Math.random() * 0.05;
+    const currentCategory = analysis?.category || category;
+
+    console.log(
+      "[Duplicate Check] Current category:",
+      currentCategory,
+      "Location:",
+      currentLat.toFixed(4),
+      currentLng.toFixed(4),
+    );
+
+    const duplicate = issues.find((issue) => {
+      const issueDate = new Date(issue.createdAt).getTime();
+      if (issueDate < oneHourAgo) return false;
+
+      // Check if same category (case-insensitive comparison)
+      const issueCatLower = issue.category?.toLowerCase() || "";
+      const currentCatLower = currentCategory?.toLowerCase() || "";
+      const sameCategory =
+        issueCatLower === currentCatLower ||
+        issue.aiReasoning?.toLowerCase().includes(currentCatLower) ||
+        currentCatLower.includes(issueCatLower);
+
+      // Check location proximity (within ~100 meters)
+      const distance = Math.sqrt(
+        Math.pow((issue.lat - currentLat) * 111000, 2) +
+          Math.pow((issue.lng - currentLng) * 111000 * Math.cos((currentLat * Math.PI) / 180), 2),
+      );
+
+      console.log(
+        "[Duplicate Check] Comparing:",
+        issue.id,
+        "Category match:",
+        sameCategory,
+        "Distance:",
+        distance.toFixed(1),
+        "m",
+      );
+
+      return sameCategory && distance < 100;
+    });
+
+    if (duplicate) {
+      setValidationError(
+        `Duplicate report detected! A similar issue (${duplicate.id}) of type "${duplicate.category}" was reported within the last hour near this location. Please check the existing report.`,
+      );
+      return;
+    }
+
+    const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
 
     const issue = {
       id,
@@ -246,6 +320,11 @@ Please take immediate action on this report.
           onSubmit={submit}
           className="mt-10 space-y-7 rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8"
         >
+          {validationError && (
+            <div className="rounded-xl border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+              <strong>Report Rejected:</strong> {validationError}
+            </div>
+          )}
           <div>
             <Label>Category</Label>
             <div className="mt-2 flex flex-wrap gap-2">
