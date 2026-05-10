@@ -145,9 +145,24 @@ export const issuesStore = {
       severity: issue.severity ?? null,
       ai_reasoning: issue.aiReasoning ?? null,
       ai_verification: issue.aiVerification ?? null,
-    });
+      reporter_email: issue.reporterEmail ?? null,
+      points_awarded: issue.pointsAwarded ?? 0,
+      reward_status: issue.rewardStatus ?? "unclaimed",
+    } as any);
     if (error) { console.error("[issues.insert]", error); return; }
     await supabase.from("upvotes").insert({ issue_id: issue.id, voter_id: voter });
+  },
+
+  markRewardSent: async (id: string, note: string) => {
+    const sentAt = new Date().toISOString();
+    state = state.map((i) =>
+      i.id === id ? { ...i, rewardStatus: "sent", rewardSentAt: sentAt, rewardNote: note } : i,
+    );
+    emit();
+    await supabase
+      .from("issues")
+      .update({ reward_status: "sent", reward_sent_at: sentAt, reward_note: note } as any)
+      .eq("id", id);
   },
 
   toggleUpvote: async (id: string) => {
