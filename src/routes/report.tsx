@@ -14,10 +14,14 @@ import {
   AlertTriangle,
   X,
   Plus,
+  Video,
+  Gift,
+  Mail,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
+import { LiveCamera } from "@/components/live-camera";
+import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL, computePoints } from "@/lib/issues";
 import { issuesStore, useIssues } from "@/lib/issues-store";
 import { analyzePhoto, type PhotoAnalysis } from "@/lib/analyze-photo.functions";
 
