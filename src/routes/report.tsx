@@ -432,20 +432,31 @@ Please take immediate action on this report.
                 </div>
               ))}
               {photos.length < 5 && (
-                <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-surface text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
-                  <Plus className="h-5 w-5" />
-                  Add photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      files.slice(0, 5 - photos.length).forEach((file) => onPhoto(file));
-                    }}
-                  />
-                </label>
+                <>
+                  <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-surface text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
+                    <Plus className="h-5 w-5" />
+                    Add photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        files.slice(0, 5 - photos.length).forEach((file) => onPhoto(file));
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setLiveOpen(true)}
+                    className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 text-sm font-semibold text-accent-foreground transition hover:border-accent hover:bg-accent/10"
+                  >
+                    <Video className="h-5 w-5 text-accent" />
+                    Live camera
+                    <span className="text-[10px] font-normal text-muted-foreground">AI scans live</span>
+                  </button>
+                </>
               )}
             </div>
 
