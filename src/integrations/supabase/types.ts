@@ -14,7 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      issue_updates: {
+        Row: {
+          by_name: string
+          created_at: string
+          id: string
+          issue_id: string
+          note: string
+        }
+        Insert: {
+          by_name: string
+          created_at?: string
+          id?: string
+          issue_id: string
+          note: string
+        }
+        Update: {
+          by_name?: string
+          created_at?: string
+          id?: string
+          issue_id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_updates_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          address: string
+          ai_reasoning: string | null
+          ai_verification: Json | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image: string | null
+          lat: number
+          lng: number
+          reporter: string
+          severity: string | null
+          status: string
+          title: string
+          upvote_count: number
+          voter_id: string | null
+        }
+        Insert: {
+          address: string
+          ai_reasoning?: string | null
+          ai_verification?: Json | null
+          category: string
+          created_at?: string
+          description: string
+          id: string
+          image?: string | null
+          lat: number
+          lng: number
+          reporter?: string
+          severity?: string | null
+          status?: string
+          title: string
+          upvote_count?: number
+          voter_id?: string | null
+        }
+        Update: {
+          address?: string
+          ai_reasoning?: string | null
+          ai_verification?: Json | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image?: string | null
+          lat?: number
+          lng?: number
+          reporter?: string
+          severity?: string | null
+          status?: string
+          title?: string
+          upvote_count?: number
+          voter_id?: string | null
+        }
+        Relationships: []
+      }
+      upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          issue_id: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issue_id: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issue_id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upvotes_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
