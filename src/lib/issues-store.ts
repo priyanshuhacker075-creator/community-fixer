@@ -1,103 +1,191 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { Issue, SEED_ISSUES } from "./issues";
+import { Issue, IssueCategory, IssueStatus, PollutionSeverity, AiVerification } from "./issues";
+import { supabase } from "@/integrations/supabase/client";
 
-const KEY = "civicfix:issues:v1";
-const VOTES_KEY = "civicfix:votes:v1";
+const VOTER_KEY = "civicfix:voter_id:v1";
 
-function load(): Issue[] {
-  if (typeof window === "undefined") return SEED_ISSUES;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return SEED_ISSUES;
-    return JSON.parse(raw);
-  } catch {
-    return SEED_ISSUES;
+function getVoterId(): string {
+  if (typeof window === "undefined") return "ssr";
+  let id = localStorage.getItem(VOTER_KEY);
+  if (!id) {
+    id = (crypto.randomUUID?.() ?? `v_${Math.random().toString(36).slice(2)}_${Date.now()}`);
+    localStorage.setItem(VOTER_KEY, id);
   }
+  return id;
 }
 
-function loadVotes(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem(VOTES_KEY);
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw));
-  } catch {
-    return new Set();
-  }
-}
-
-function saveVotes(votes: Set<string>) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(VOTES_KEY, JSON.stringify([...votes]));
-  }
-}
-
-let state: Issue[] = SEED_ISSUES;
-let userVotes = new Set<string>();
+let state: Issue[] = [];
+let myVotes = new Set<string>();
+let hydrated = false;
+let realtimeBound = false;
 const listeners = new Set<() => void>();
+function emit() { listeners.forEach((l) => l()); }
 
-function persist() {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
-  listeners.forEach((l) => l());
+type DbIssue = {
+  id: string; title: string; description: string; category: string; status: string;
+  address: string; lat: number; lng: number; reporter: string; image: string | null;
+  severity: string | null; ai_reasoning: string | null; ai_verification: any;
+  upvote_count: number; created_at: string;
+};
+type DbUpdate = { id: string; issue_id: string; note: string; by_name: string; created_at: string };
+
+function rowToIssue(r: DbIssue, updates: DbUpdate[] = []): Issue {
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    category: r.category as IssueCategory,
+    status: r.status as IssueStatus,
+    address: r.address,
+    lat: Number(r.lat), lng: Number(r.lng),
+    createdAt: r.created_at,
+    upvotes: r.upvote_count ?? 0,
+    reporter: r.reporter,
+    image: r.image ?? undefined,
+    severity: (r.severity ?? undefined) as PollutionSeverity | undefined,
+    aiReasoning: r.ai_reasoning ?? undefined,
+    aiVerification: (r.ai_verification ?? undefined) as AiVerification | undefined,
+    updates: updates
+      .filter((u) => u.issue_id === r.id)
+      .map((u) => ({ at: u.created_at, note: u.note, by: u.by_name })),
+  };
+}
+
+async function hydrate() {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
+  const voter = getVoterId();
+  const [{ data: issues }, { data: updates }, { data: votes }] = await Promise.all([
+    supabase.from("issues").select("*").order("created_at", { ascending: false }),
+    supabase.from("issue_updates").select("*").order("created_at", { ascending: true }),
+    supabase.from("upvotes").select("issue_id").eq("voter_id", voter),
+  ]);
+  const updateRows = (updates ?? []) as DbUpdate[];
+  state = ((issues ?? []) as DbIssue[]).map((r) => rowToIssue(r, updateRows));
+  myVotes = new Set((votes ?? []).map((v: any) => v.issue_id));
+  emit();
+  bindRealtime();
+}
+
+function bindRealtime() {
+  if (realtimeBound) return;
+  realtimeBound = true;
+  const voter = getVoterId();
+  supabase
+    .channel("civicfix-public")
+    .on("postgres_changes", { event: "*", schema: "public", table: "issues" }, (payload) => {
+      if (payload.eventType === "INSERT") {
+        const issue = rowToIssue(payload.new as DbIssue, []);
+        if (!state.find((i) => i.id === issue.id)) state = [issue, ...state];
+        else state = state.map((i) => (i.id === issue.id ? { ...issue, updates: i.updates } : i));
+      } else if (payload.eventType === "UPDATE") {
+        const r = payload.new as DbIssue;
+        state = state.map((i) => (i.id === r.id ? { ...rowToIssue(r), updates: i.updates } : i));
+      } else if (payload.eventType === "DELETE") {
+        const r = payload.old as DbIssue;
+        state = state.filter((i) => i.id !== r.id);
+      }
+      emit();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "upvotes" }, (payload) => {
+      const row: any = payload.new ?? payload.old;
+      if (row?.voter_id === voter) {
+        if (payload.eventType === "INSERT") myVotes.add(row.issue_id);
+        else if (payload.eventType === "DELETE") myVotes.delete(row.issue_id);
+      }
+      emit();
+    })
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "issue_updates" }, (payload) => {
+      const u = payload.new as DbUpdate;
+      state = state.map((i) =>
+        i.id === u.issue_id
+          ? { ...i, updates: [...i.updates, { at: u.created_at, note: u.note, by: u.by_name }] }
+          : i,
+      );
+      emit();
+    })
+    .subscribe();
 }
 
 export const issuesStore = {
   get: () => state,
-  hydrate: () => {
-    state = load();
-    userVotes = loadVotes();
-    listeners.forEach((l) => l());
+  subscribe: (l: () => void) => { listeners.add(l); return () => listeners.delete(l); },
+  hydrate,
+
+  add: async (issue: Issue) => {
+    const voter = getVoterId();
+    // Optimistic local insert
+    state = [{ ...issue, upvotes: 1 }, ...state.filter((i) => i.id !== issue.id)];
+    myVotes.add(issue.id);
+    emit();
+
+    const { error } = await supabase.from("issues").insert({
+      id: issue.id,
+      title: issue.title,
+      description: issue.description,
+      category: issue.category,
+      status: issue.status,
+      address: issue.address,
+      lat: issue.lat,
+      lng: issue.lng,
+      reporter: issue.reporter,
+      voter_id: voter,
+      image: issue.image ?? null,
+      severity: issue.severity ?? null,
+      ai_reasoning: issue.aiReasoning ?? null,
+      ai_verification: issue.aiVerification ?? null,
+    });
+    if (error) { console.error("[issues.insert]", error); return; }
+    await supabase.from("upvotes").insert({ issue_id: issue.id, voter_id: voter });
   },
-  subscribe: (l: () => void) => {
-    listeners.add(l);
-    return () => listeners.delete(l);
-  },
-  add: (issue: Issue) => {
-    state = [issue, ...state];
-    persist();
-  },
-  toggleUpvote: (id: string) => {
-    const hasVoted = userVotes.has(id);
-    if (hasVoted) {
-      userVotes.delete(id);
-      state = state.map((i) => (i.id === id ? { ...i, upvotes: i.upvotes - 1 } : i));
+
+  toggleUpvote: async (id: string) => {
+    const voter = getVoterId();
+    const has = myVotes.has(id);
+    // Optimistic
+    if (has) {
+      myVotes.delete(id);
+      state = state.map((i) => (i.id === id ? { ...i, upvotes: Math.max(0, i.upvotes - 1) } : i));
     } else {
-      userVotes.add(id);
+      myVotes.add(id);
       state = state.map((i) => (i.id === id ? { ...i, upvotes: i.upvotes + 1 } : i));
     }
-    saveVotes(userVotes);
-    persist();
+    emit();
+    if (has) await supabase.from("upvotes").delete().eq("issue_id", id).eq("voter_id", voter);
+    else await supabase.from("upvotes").insert({ issue_id: id, voter_id: voter });
   },
-  hasVoted: (id: string) => userVotes.has(id),
-  update: (id: string, updates: Partial<Issue>) => {
+
+  hasVoted: (id: string) => myVotes.has(id),
+
+  update: async (id: string, updates: Partial<Issue>) => {
     state = state.map((i) => (i.id === id ? { ...i, ...updates } : i));
-    persist();
+    emit();
+    const dbPatch: any = {};
+    if (updates.status) dbPatch.status = updates.status;
+    if (updates.title) dbPatch.title = updates.title;
+    if (updates.description) dbPatch.description = updates.description;
+    if (updates.category) dbPatch.category = updates.category;
+    if (updates.severity) dbPatch.severity = updates.severity;
+    if (Object.keys(dbPatch).length) await supabase.from("issues").update(dbPatch).eq("id", id);
   },
-  addUpdate: (id: string, note: string, by: string) => {
-    state = state.map((i) => {
-      if (i.id === id) {
-        return { ...i, updates: [...i.updates, { at: new Date().toISOString(), note, by }] };
-      }
-      return i;
-    });
-    persist();
+
+  addUpdate: async (id: string, note: string, by: string) => {
+    state = state.map((i) =>
+      i.id === id ? { ...i, updates: [...i.updates, { at: new Date().toISOString(), note, by }] } : i,
+    );
+    emit();
+    await supabase.from("issue_updates").insert({ issue_id: id, note, by_name: by });
   },
-  remove: (id: string) => {
+
+  remove: async (id: string) => {
     state = state.filter((i) => i.id !== id);
-    persist();
+    emit();
+    await supabase.from("issues").delete().eq("id", id);
   },
 };
 
 export function useIssues(): Issue[] {
-  const data = useSyncExternalStore(
-    issuesStore.subscribe,
-    () => issuesStore.get(),
-    () => SEED_ISSUES,
-  );
-  useEffect(() => {
-    issuesStore.hydrate();
-  }, []);
+  const data = useSyncExternalStore(issuesStore.subscribe, () => state, () => state);
+  useEffect(() => { issuesStore.hydrate(); }, []);
   return data;
 }
