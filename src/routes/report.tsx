@@ -47,6 +47,7 @@ function ReportPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [reporter, setReporter] = useState("");
+  const [reporterEmail, setReporterEmail] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "locating" | "ok" | "error">("idle");
@@ -55,6 +56,7 @@ function ReportPage() {
   const [aiError, setAiError] = useState<string>("");
   const [analysis, setAnalysis] = useState<PhotoAnalysis | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
   const runAnalyze = useServerFn(analyzePhoto);
   const issues = useIssues();
 
