@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { Issue, IssueCategory, IssueStatus, PollutionSeverity, AiVerification } from "./issues";
+import { Issue, IssueCategory, IssueStatus, PollutionSeverity, AiVerification, RewardStatus } from "./issues";
 import { supabase } from "@/integrations/supabase/client";
 
 const VOTER_KEY = "civicfix:voter_id:v1";
 
-function getVoterId(): string {
+export function getVoterId(): string {
   if (typeof window === "undefined") return "ssr";
   let id = localStorage.getItem(VOTER_KEY);
   if (!id) {
@@ -26,6 +26,12 @@ type DbIssue = {
   address: string; lat: number; lng: number; reporter: string; image: string | null;
   severity: string | null; ai_reasoning: string | null; ai_verification: any;
   upvote_count: number; created_at: string;
+  reporter_email?: string | null;
+  points_awarded?: number | null;
+  reward_status?: string | null;
+  reward_sent_at?: string | null;
+  reward_note?: string | null;
+  voter_id?: string | null;
 };
 type DbUpdate = { id: string; issue_id: string; note: string; by_name: string; created_at: string };
 
@@ -41,10 +47,15 @@ function rowToIssue(r: DbIssue, updates: DbUpdate[] = []): Issue {
     createdAt: r.created_at,
     upvotes: r.upvote_count ?? 0,
     reporter: r.reporter,
+    reporterEmail: r.reporter_email ?? undefined,
     image: r.image ?? undefined,
     severity: (r.severity ?? undefined) as PollutionSeverity | undefined,
     aiReasoning: r.ai_reasoning ?? undefined,
     aiVerification: (r.ai_verification ?? undefined) as AiVerification | undefined,
+    pointsAwarded: r.points_awarded ?? 0,
+    rewardStatus: (r.reward_status ?? "unclaimed") as RewardStatus,
+    rewardSentAt: r.reward_sent_at ?? undefined,
+    rewardNote: r.reward_note ?? undefined,
     updates: updates
       .filter((u) => u.issue_id === r.id)
       .map((u) => ({ at: u.created_at, note: u.note, by: u.by_name })),
