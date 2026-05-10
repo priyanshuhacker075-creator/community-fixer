@@ -23,6 +23,7 @@ import {
   EyeOff,
   LogOut,
   Trash2,
+  Gift,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
