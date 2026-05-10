@@ -44,7 +44,7 @@ export function WorldPollutionMap({ issues }: { issues: Issue[] }) {
     <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-elegant">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h2 className="font-display text-xl font-bold tracking-tight">Live pollution map</h2>
+          <h2 className="font-display text-xl font-bold tracking-tight">Live map</h2>
           <p className="text-xs text-muted-foreground">
             AI-classified reports plotted worldwide. Color = severity.
           </p>
