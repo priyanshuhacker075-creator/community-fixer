@@ -58,7 +58,12 @@ export type Database = {
           image: string | null
           lat: number
           lng: number
+          points_awarded: number
           reporter: string
+          reporter_email: string | null
+          reward_note: string | null
+          reward_sent_at: string | null
+          reward_status: string
           severity: string | null
           status: string
           title: string
@@ -76,7 +81,12 @@ export type Database = {
           image?: string | null
           lat: number
           lng: number
+          points_awarded?: number
           reporter?: string
+          reporter_email?: string | null
+          reward_note?: string | null
+          reward_sent_at?: string | null
+          reward_status?: string
           severity?: string | null
           status?: string
           title: string
@@ -94,7 +104,12 @@ export type Database = {
           image?: string | null
           lat?: number
           lng?: number
+          points_awarded?: number
           reporter?: string
+          reporter_email?: string | null
+          reward_note?: string | null
+          reward_sent_at?: string | null
+          reward_status?: string
           severity?: string | null
           status?: string
           title?: string

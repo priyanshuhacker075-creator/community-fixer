@@ -14,10 +14,14 @@ import {
   AlertTriangle,
   X,
   Plus,
+  Video,
+  Gift,
+  Mail,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL } from "@/lib/issues";
+import { LiveCamera } from "@/components/live-camera";
+import { CATEGORIES, IssueCategory, SEVERITY_COLOR, SEVERITY_LABEL, computePoints } from "@/lib/issues";
 import { issuesStore, useIssues } from "@/lib/issues-store";
 import { analyzePhoto, type PhotoAnalysis } from "@/lib/analyze-photo.functions";
 
@@ -43,6 +47,7 @@ function ReportPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [reporter, setReporter] = useState("");
+  const [reporterEmail, setReporterEmail] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "locating" | "ok" | "error">("idle");
@@ -51,6 +56,7 @@ function ReportPage() {
   const [aiError, setAiError] = useState<string>("");
   const [analysis, setAnalysis] = useState<PhotoAnalysis | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
   const runAnalyze = useServerFn(analyzePhoto);
   const issues = useIssues();
 
@@ -216,6 +222,7 @@ function ReportPage() {
     }
 
     const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
+    const points = computePoints(currentSeverity, analysis?.isGenuine);
 
     const issue = {
       id,
@@ -229,6 +236,7 @@ function ReportPage() {
       createdAt: new Date().toISOString(),
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
+      reporterEmail: reporterEmail.trim() || undefined,
       image: photos[0],
       severity: currentSeverity,
       aiReasoning: analysis?.reasoning,
@@ -241,6 +249,8 @@ function ReportPage() {
             confidence: analysis.confidence,
           }
         : undefined,
+      pointsAwarded: points,
+      rewardStatus: reporterEmail.trim() ? ("pending" as const) : ("unclaimed" as const),
       updates: [],
     };
 
@@ -422,20 +432,31 @@ Please take immediate action on this report.
                 </div>
               ))}
               {photos.length < 5 && (
-                <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-surface text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
-                  <Plus className="h-5 w-5" />
-                  Add photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      files.slice(0, 5 - photos.length).forEach((file) => onPhoto(file));
-                    }}
-                  />
-                </label>
+                <>
+                  <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-surface text-sm text-muted-foreground transition hover:border-accent hover:text-foreground">
+                    <Plus className="h-5 w-5" />
+                    Add photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        files.slice(0, 5 - photos.length).forEach((file) => onPhoto(file));
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setLiveOpen(true)}
+                    className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 text-sm font-semibold text-accent-foreground transition hover:border-accent hover:bg-accent/10"
+                  >
+                    <Video className="h-5 w-5 text-accent" />
+                    Live camera
+                    <span className="text-[10px] font-normal text-muted-foreground">AI scans live</span>
+                  </button>
+                </>
               )}
             </div>
 
@@ -529,6 +550,40 @@ Please take immediate action on this report.
             />
           </Field>
 
+          <Field
+            label="Email for rewards (optional)"
+            icon={<Mail className="h-4 w-4" />}
+            hint="Earn points for verified reports. Admin sends rewards to this email."
+          >
+            <input
+              type="email"
+              value={reporterEmail}
+              onChange={(e) => setReporterEmail(e.target.value)}
+              className={inputCls}
+              placeholder="you@example.com"
+            />
+          </Field>
+
+          {analysis && (
+            <div className="flex items-center gap-3 rounded-xl border border-accent/30 bg-accent/5 p-3 text-sm">
+              <Gift className="h-5 w-5 text-accent" />
+              <div>
+                <p className="font-semibold">
+                  You'll earn{" "}
+                  <span className="text-accent">
+                    {computePoints(analysis.severity, analysis.isGenuine)} points
+                  </span>{" "}
+                  for this report.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {reporterEmail.trim()
+                    ? "Reward will be sent to your email after admin review."
+                    : "Add your email above to claim rewards."}
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3 text-sm font-semibold text-background transition hover:opacity-90 md:w-auto md:px-8"
@@ -537,6 +592,24 @@ Please take immediate action on this report.
           </button>
         </form>
       </section>
+
+      {liveOpen && (
+        <LiveCamera
+          description={description}
+          onClose={() => setLiveOpen(false)}
+          onCapture={(dataUrl, result) => {
+            setPhotos((p) => [...p, dataUrl].slice(0, 5));
+            setAnalysis(result);
+            setAiStatus("ok");
+            if (CATEGORIES.includes(result.category as IssueCategory)) {
+              setCategory(result.category as IssueCategory);
+            }
+            setTitle((t) => t || result.title);
+            setDescription((d) => d || result.description);
+            setLiveOpen(false);
+          }}
+        />
+      )}
       <SiteFooter />
     </div>
   );

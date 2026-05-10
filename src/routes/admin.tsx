@@ -23,6 +23,7 @@ import {
   EyeOff,
   LogOut,
   Trash2,
+  Gift,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -516,24 +517,54 @@ Please take appropriate action on this issue.
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
-              <button
-                onClick={() => notifyAuthority(selectedIssue)}
-                disabled={sending}
-                className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60"
-              >
-                {sending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="h-4 w-4" />
-                )}
-                Notify {AUTHORITY_MAP[selectedIssue.category]?.name || "Authority"}
-              </button>
-              {sent && (
-                <span className="flex items-center gap-1 text-sm text-success">
-                  <CheckCircle2 className="h-4 w-4" /> Notification sent!
-                </span>
+            <div className="mt-6 space-y-3 border-t border-border pt-4">
+              {/* Reward block */}
+              {selectedIssue.reporterEmail && (
+                <div className="rounded-xl border border-accent/30 bg-accent/5 p-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                    <Gift className="h-4 w-4 text-accent" /> Reward
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                    <span><strong>{selectedIssue.pointsAwarded ?? 0}</strong> pts</span>
+                    <span className="text-muted-foreground">→</span>
+                    <a href={`mailto:${selectedIssue.reporterEmail}?subject=${encodeURIComponent(`[CivicFix] Your reward for report ${selectedIssue.id}`)}&body=${encodeURIComponent(`Hi,\n\nThanks for reporting "${selectedIssue.title}" on CivicFix. You've earned ${selectedIssue.pointsAwarded ?? 0} points.\n\nReward details: [add reward here]\n\n— CivicFix Team`)}`} className="font-mono text-accent underline">{selectedIssue.reporterEmail}</a>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${selectedIssue.rewardStatus === "sent" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
+                      {selectedIssue.rewardStatus ?? "unclaimed"}
+                    </span>
+                  </div>
+                  {selectedIssue.rewardStatus !== "sent" && (
+                    <button
+                      onClick={() => {
+                        const note = prompt("Reward note (e.g. 'Sent $5 voucher via email'):") || "Reward sent";
+                        issuesStore.markRewardSent(selectedIssue.id, note);
+                        setSelectedIssue({ ...selectedIssue, rewardStatus: "sent", rewardNote: note, rewardSentAt: new Date().toISOString() });
+                      }}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:opacity-90"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Mark reward as sent
+                    </button>
+                  )}
+                  {selectedIssue.rewardNote && (
+                    <p className="mt-2 text-xs text-muted-foreground">{selectedIssue.rewardNote}</p>
+                  )}
+                </div>
               )}
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => notifyAuthority(selectedIssue)}
+                  disabled={sending}
+                  className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Notify {AUTHORITY_MAP[selectedIssue.category]?.name || "Authority"}
+                </button>
+                {sent && (
+                  <span className="flex items-center gap-1 text-sm text-success">
+                    <CheckCircle2 className="h-4 w-4" /> Notification sent!
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

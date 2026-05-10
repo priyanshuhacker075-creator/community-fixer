@@ -24,6 +24,8 @@ export type AiVerification = {
   confidence: number;
 };
 
+export type RewardStatus = "unclaimed" | "pending" | "sent";
+
 export type Issue = {
   id: string;
   title: string;
@@ -36,12 +38,27 @@ export type Issue = {
   createdAt: string;
   upvotes: number;
   reporter: string;
+  reporterEmail?: string;
   image?: string;
   severity?: PollutionSeverity;
   aiReasoning?: string;
   aiVerification?: AiVerification;
+  pointsAwarded?: number;
+  rewardStatus?: RewardStatus;
+  rewardSentAt?: string;
+  rewardNote?: string;
   updates: { at: string; note: string; by: string }[];
 };
+
+export const SEVERITY_POINTS: Record<PollutionSeverity, number> = {
+  none: 0, low: 10, medium: 25, high: 50, critical: 100,
+};
+
+export function computePoints(severity: PollutionSeverity | undefined, isGenuine: boolean | undefined): number {
+  const base = SEVERITY_POINTS[severity ?? "low"] ?? 10;
+  const verifiedBonus = isGenuine ? 20 : 0;
+  return base + verifiedBonus;
+}
 
 export const SEVERITY_LABEL: Record<PollutionSeverity, string> = {
   none: "None", low: "Low", medium: "Medium", high: "High", critical: "Critical",
