@@ -222,6 +222,7 @@ function ReportPage() {
     }
 
     const id = `FIX-${1100 + Math.floor(Math.random() * 900)}`;
+    const points = computePoints(currentSeverity, analysis?.isGenuine);
 
     const issue = {
       id,
@@ -235,6 +236,7 @@ function ReportPage() {
       createdAt: new Date().toISOString(),
       upvotes: 1,
       reporter: reporter.trim() || "Anonymous neighbor",
+      reporterEmail: reporterEmail.trim() || undefined,
       image: photos[0],
       severity: currentSeverity,
       aiReasoning: analysis?.reasoning,
@@ -247,6 +249,8 @@ function ReportPage() {
             confidence: analysis.confidence,
           }
         : undefined,
+      pointsAwarded: points,
+      rewardStatus: reporterEmail.trim() ? ("pending" as const) : ("unclaimed" as const),
       updates: [],
     };
 
